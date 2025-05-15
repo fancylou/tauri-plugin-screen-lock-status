@@ -26,8 +26,9 @@ use std::thread;
 use std::time::Duration;
 use tauri::{
     plugin::{Builder, TauriPlugin},
-    Manager, Runtime, Window,
+    Runtime, WebviewWindow
 };
+use tauri::Emitter;
 
 #[cfg(target_os = "macos")]
 extern "C" {
@@ -63,7 +64,7 @@ extern "system" fn wndproc(window: HWND, message: u32, wparam: WPARAM, lparam: L
     }
 }
 
-pub static WINDOW_TAURI: OnceLock<Window> = OnceLock::new();
+pub static WINDOW_TAURI: OnceLock<WebviewWindow> = OnceLock::new();
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     #[cfg(target_os = "windows")]
@@ -119,7 +120,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                             let _ = WINDOW_TAURI
                                 .get()
                                 .expect("Error get WINDOW_TAURI")
-                                .emit_all(
+                                .emit(
                                     "window_screen_lock_status://change_session_status",
                                     "lock",
                                 );
@@ -129,7 +130,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                             let _ = WINDOW_TAURI
                                 .get()
                                 .expect("Error get WINDOW_TAURI")
-                                .emit_all(
+                                .emit(
                                     "window_screen_lock_status://change_session_status",
                                     "unlock",
                                 );
@@ -165,13 +166,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                             match window {
                                 Some(_) => {
                                     if flg == true {
-                                        let _ = window.expect("Error get WINDOW_TAURI").emit_all(
+                                        let _ = window.expect("Error get WINDOW_TAURI").emit(
                                             "window_screen_lock_status://change_session_status",
                                             "lock",
                                         );
                                         println!("Locked");
                                     } else {
-                                        let _ = window.expect("Error get WINDOW_TAURI").emit_all(
+                                        let _ = window.expect("Error get WINDOW_TAURI").emit(
                                             "window_screen_lock_status://change_session_status",
                                             "unlock",
                                         );
@@ -199,7 +200,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                     let session_dictionary_ref = CGSessionCopyCurrentDictionary();
                     let session_dictionary: CFDictionary =
                         CFDictionary::wrap_under_create_rule(session_dictionary_ref);
-                    let mut current_session_property = false;
+                    let current_session_property;
                     match session_dictionary
                         .find(CFString::new("CGSSessionScreenIsLocked").to_void())
                     {
@@ -213,13 +214,13 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                         match window {
                             Some(_) => {
                                 if current_session_property == true {
-                                    let _ = window.expect("Error get WINDOW_TAURI").emit_all(
+                                    let _ = window.expect("Error get WINDOW_TAURI").emit(
                                         "window_screen_lock_status://change_session_status",
                                         "lock",
                                     );
                                     println!("Locked");
                                 } else {
-                                    let _ = window.expect("Error get WINDOW_TAURI").emit_all(
+                                    let _ = window.expect("Error get WINDOW_TAURI").emit(
                                         "window_screen_lock_status://change_session_status",
                                         "unlock",
                                     );
